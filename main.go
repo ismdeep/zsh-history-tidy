@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -59,6 +60,7 @@ func main() {
 		Short: "zsh-history-tidy",
 		Run: func(cmd *cobra.Command, args []string) {
 			filePath := v.GetString("from")
+
 			outputPath := ""
 			if v.GetBool("overwrite") {
 				outputPath = filePath
@@ -96,14 +98,6 @@ func main() {
 					continue
 				}
 
-				if r.Command == "ls" {
-					continue
-				}
-
-				if r.Command == "exit" {
-					continue
-				}
-
 				s[r.Command] = true
 
 				records = append(records, *r)
@@ -116,6 +110,22 @@ func main() {
 				panic(err)
 			}
 
+			// 排序
+			sortField := v.GetString("sort")
+			switch sortField {
+			case "command":
+				sort.Slice(records, func(i, j int) bool {
+					return strings.Compare(records[i].Command, records[j].Command) <= 0
+				})
+			case "time":
+				sort.Slice(records, func(i, j int) bool {
+					return strings.Compare(records[i].UnixTime, records[j].UnixTime) <= 0
+				})
+			default:
+				panic(fmt.Sprintf("invalid sort field. [%v]", sortField))
+			}
+
+			// 写入文件
 			for _, record := range records {
 				if _, err := f.WriteString(fmt.Sprintf("%v\n", record.Marshal())); err != nil {
 					panic(err)
@@ -123,7 +133,6 @@ func main() {
 			}
 
 			fmt.Println("Output:", outputPath)
-
 			fmt.Println("cnt:", cnt)
 		},
 	}
@@ -135,6 +144,7 @@ func main() {
 
 	mainCommand.Flags().String("from", fmt.Sprintf("%v/Documents/Data/zsh_history", userHomeDir), "from zsh history file")
 	mainCommand.Flags().Bool("overwrite", false, "overwrite source file")
+	mainCommand.Flags().StringP("sort", "s", "time", "--sort, -s <sort field>, e.g. time, command")
 	_ = v.BindPFlags(mainCommand.Flags())
 
 	if err := mainCommand.Execute(); err != nil {
