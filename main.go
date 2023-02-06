@@ -12,11 +12,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Record struct
 type Record struct {
 	UnixTime string
 	Command  string
 }
 
+// Unmarshal line to Record
 func Unmarshal(line string) (*Record, error) {
 	if len(line) <= 2 {
 		return nil, errors.New("bad request")
@@ -48,8 +50,23 @@ func Unmarshal(line string) (*Record, error) {
 	}, nil
 }
 
+// Marshal record to string
 func (r *Record) Marshal() string {
 	return fmt.Sprintf(": %v:0;%v", r.UnixTime, r.Command)
+}
+
+func index(slice []Record, command string) int {
+	for i := 0; i < len(slice); i++ {
+		if slice[i].Command == command {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func remove(slice []Record, index int) []Record {
+	return append(slice[:index], slice[index+1:]...)
 }
 
 func main() {
@@ -85,8 +102,6 @@ func main() {
 
 			lines := strings.Split(string(content), "\n")
 
-			s := make(map[string]bool)
-			cnt := 0
 			var records []Record
 			for _, line := range lines {
 				r, err := Unmarshal(line)
@@ -94,15 +109,12 @@ func main() {
 					continue
 				}
 
-				if _, ok := s[r.Command]; ok {
-					continue
+				// 如果找到，则删除
+				if idx := index(records, r.Command); idx != -1 {
+					records = remove(records, idx)
 				}
 
-				s[r.Command] = true
-
 				records = append(records, *r)
-
-				cnt++
 			}
 
 			f, err := os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0750)
@@ -133,7 +145,7 @@ func main() {
 			}
 
 			fmt.Println("Output:", outputPath)
-			fmt.Println("cnt:", cnt)
+			fmt.Println("cnt:", len(records))
 		},
 	}
 
