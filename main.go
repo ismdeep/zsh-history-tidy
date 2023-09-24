@@ -65,10 +65,6 @@ func index(slice []Record, command string) int {
 	return -1
 }
 
-func remove(slice []Record, index int) []Record {
-	return append(slice[:index], slice[index+1:]...)
-}
-
 func main() {
 	v := viper.New()
 
@@ -109,9 +105,9 @@ func main() {
 					continue
 				}
 
-				// 如果找到，则删除
+				// 如果找到，则丢弃当前的
 				if idx := index(records, r.Command); idx != -1 {
-					records = remove(records, idx)
+					continue
 				}
 
 				records = append(records, *r)
