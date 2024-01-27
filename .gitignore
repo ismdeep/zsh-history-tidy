@@ -1,2 +1,6 @@
 /.idea/
 /vendor/
+/debian-build/zsh-history-tidy/DEBIAN/control
+/debian-build/zsh-history-tidy/usr/bin/
+/bin/
+/output/

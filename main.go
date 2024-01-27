@@ -150,7 +150,12 @@ func main() {
 		panic(err)
 	}
 
-	mainCommand.Flags().String("from", fmt.Sprintf("%v/Data/zsh_history", userHomeDir), "from zsh history file")
+	defaultFrom := fmt.Sprintf(fmt.Sprintf("%v/.zsh_history", userHomeDir))
+	if envFrom := os.Getenv("ZSH_HISTORY_FILE"); envFrom != "" {
+		defaultFrom = envFrom
+	}
+
+	mainCommand.Flags().String("from", defaultFrom, "from zsh history file")
 	mainCommand.Flags().Bool("overwrite", false, "overwrite source file")
 	mainCommand.Flags().StringP("sort", "s", "time", "--sort, -s <sort field>, e.g. time, command")
 	_ = v.BindPFlags(mainCommand.Flags())
